@@ -23,7 +23,7 @@ A per-episode experiment and analysis system. Measures full video impact: CTR, r
 ## Workflow
 
 ```
-"impact lab start EP7 Guest Name"
+"impact lab start [Episode Title] [Guest Name]"
   → Claude creates Canvas in #gl-youtube-operations
   → Producer fills in Set A/B/C (title, thumbnail, intro, hypothesis)
 
@@ -214,7 +214,7 @@ Created by `impact lab start`:
 
 ## Commands
 
-- `impact lab start EP7 Guest Name` -- Create Canvas + LEARN
+- `impact lab start [Episode Title] [Guest Name]` -- Create Canvas + LEARN
 - `impact lab publish` -- Read Canvas, start tracking
 - `impact lab measure` -- Collect data (hourly or checkpoint)
 - `impact lab report` -- Generate report (auto at D+7, D+14)

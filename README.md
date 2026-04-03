@@ -16,7 +16,7 @@ After cloning, the skill is immediately available in Claude Code.
 ## Quick Start
 
 ```
-impact lab start EP7 Guest Name
+impact lab start [Episode Title] [Guest Name]
 ```
 
 This creates a Slack Canvas in `#gl-youtube-operations` with the episode template. Fill in your hypotheses, publish, and Claude handles the rest.
@@ -25,7 +25,7 @@ This creates a Slack Canvas in `#gl-youtube-operations` with the episode templat
 
 | Command | What it does |
 |---------|-------------|
-| `impact lab start EP7 Name` | Create Canvas + extract content DNA from script |
+| `impact lab start [Episode Title] [Guest Name]` | Create Canvas + extract content DNA from script |
 | `impact lab publish` | Read Canvas, record publish time, start tracking |
 | `impact lab measure` | Collect D+7 or D+14 data (auto + manual) |
 | `impact lab report` | Generate analysis report |
