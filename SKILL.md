@@ -1,7 +1,7 @@
-# YT Impact Lab: Hypothesis-Driven Video Performance Analysis
+# Media Impact Lab: Hypothesis-Driven Video Performance Analysis
 
 ## Trigger
-Use when: "impact lab", "yt impact lab", "임팩트 랩", "발행 분석", "퍼포먼스 분석", "에피소드 분석", "가설 검증", "성과 분석"
+Use when: "impact lab", "media impact lab", "임팩트 랩", "발행 분석", "퍼포먼스 분석", "에피소드 분석", "가설 검증", "성과 분석"
 
 ## Overview
 
@@ -13,7 +13,7 @@ A per-episode experiment and analysis system. Measures full video impact: CTR, r
 
 ## Output
 
-`~/Desktop/Cowork/yt-impact-lab/`
+`~/Desktop/Cowork/media-impact-lab/`
 
 - `{guest_name}_ep{N}.md` -- archive (e.g. `rem_koning_ep5.md`)
 - `{guest_name}_ep{N}_chart.html` -- performance dashboard
@@ -191,7 +191,7 @@ Updates Week 1 Report with:
 
 #### Report Output
 - Write into Slack Canvas via `slack_update_canvas`
-- Save archive: `~/Desktop/Cowork/yt-impact-lab/{file}.md`
+- Save archive: `~/Desktop/Cowork/media-impact-lab/{file}.md`
 - Generate chart: `{file}_chart.html` (dark theme, Chart.js, standalone)
 - Post summary to `#gl-youtube-operations`
 
@@ -201,7 +201,7 @@ Updates Week 1 Report with:
 
 Created by `impact lab start`:
 
-**Title**: `YT Impact Lab: [Series] EP[N] -- [Guest Name]`
+**Title**: `Media Impact Lab: [Series] EP[N] -- [Guest Name]`
 
 **Sections**:
 1. HYPOTHESIS -- Set A/B/C (producer fills)

@@ -1,4 +1,4 @@
-# YT Impact Lab
+# Media Impact Lab
 
 Hypothesis-driven video performance analysis for EO Global.
 
@@ -8,7 +8,7 @@ Every publish is an experiment. Record your hypothesis before publishing, track 
 
 ```bash
 # Clone into your Claude Code skills directory
-git clone https://github.com/JYNIDA/yt-impact-lab.git ~/.claude/skills/yt-impact-lab
+git clone https://github.com/JYNIDA/media-impact-lab.git ~/.claude/skills/media-impact-lab
 ```
 
 After cloning, the skill is immediately available in Claude Code.
