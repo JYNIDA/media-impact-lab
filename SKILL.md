@@ -148,6 +148,24 @@ filters=video==VIDEO_ID
 #### Manual Fallback
 Producer fills Canvas measurement table. Captures API-exclusive data: A/B Watch Time Share, traffic source CTR.
 
+#### Slack Alert (after Auto metrics are filled)
+
+After `impact lab measure` fills the Auto rows in the Canvas, post this alert to `#gl-youtube-operations`:
+
+```
+D+7 Auto metrics collected for [Episode Name].
+Canvas updated: [canvas link]
+
+Studio에서 아래 항목 확인하고 빈 칸 채워주세요:
+- Impressions
+- CTR
+- Browse % / Suggested % / Search %
+- A/B winner (Set __)
+- A/B Watch Time Share
+
+다 채우면 "impact lab report" 실행해서 리포트 생성합니다.
+```
+
 ---
 
 ### Phase 5: REPORT (Auto-generated)
