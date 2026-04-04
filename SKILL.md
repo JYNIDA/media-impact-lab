@@ -332,10 +332,11 @@ Created by `impact lab start`:
 ## Slack
 - **Channel**: `#gl-youtube-operations` (channel ID: `C09UQSSK40M`)
 - **Fallback**: `#team-gl-media`
-- **Webhook** (Block Kit): stored in `~/.claude/skills/weekly-meeting/config/config.json` under `slack.impact_lab_webhook`
+- **Bot Token** (Block Kit, editable): stored in `~/.claude/skills/weekly-meeting/config/config.json` under `slack.impact_lab_bot_token`
+- **Webhook** (legacy, non-editable): stored in config under `slack.impact_lab_webhook`
 - **Thumbnail requests**: `#request-썸네일` (channel ID: `C033Z5AC3FA`)
 
-### Slack Message Format (use webhook, not MCP)
+### Slack Message Format (use bot token API, not MCP or webhook)
 
 Header format: `[Series Name] Guest/Company - Founder Name`
 Examples: `[Founder Focused] Paraform - John Kim`, `[The Thinking Mode] EP7 - Bharat Chandar`
