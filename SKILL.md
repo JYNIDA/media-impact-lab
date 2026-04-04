@@ -330,8 +330,25 @@ Created by `impact lab start`:
 ---
 
 ## Slack
-- **Canvas + discussion**: `#gl-youtube-operations`
+- **Channel**: `#gl-youtube-operations` (channel ID: `C09UQSSK40M`)
 - **Fallback**: `#team-gl-media`
+- **Webhook** (Block Kit): stored in `~/.claude/skills/weekly-meeting/config/config.json` under `slack.impact_lab_webhook`
+- **Thumbnail requests**: `#request-썸네일` (channel ID: `C033Z5AC3FA`)
+
+### Slack Message Format (use webhook, not MCP)
+
+Header format: `[Series Name] Guest/Company - Founder Name`
+Examples: `[Founder Focused] Paraform - John Kim`, `[The Thinking Mode] EP7 - Bharat Chandar`
+
+```bash
+curl -s -X POST "$WEBHOOK_URL" -H 'Content-Type: application/json' -d '{
+  "blocks": [
+    {"type": "header", "text": {"type": "plain_text", "text": "🧪 [SERIES] Guest - Name", "emoji": true}},
+    {"type": "section", "text": {"type": "mrkdwn", "text": "<NOTION_URL|📝 Notion page> | <THUMBNAIL_THREAD_URL|🎨 Thumbnail thread>"}},
+    {"type": "section", "text": {"type": "mrkdwn", "text": "Fill in your hypothesis (Set A/B) before publish.\n→ Title, thumbnail description, intro flow, and *WHY this will work*"}}
+  ]
+}'
+```
 
 ---
 
