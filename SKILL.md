@@ -9,7 +9,8 @@ A per-episode experiment and analysis system. Measures full video impact: CTR, r
 
 **Core premise**: Title + Thumbnail + Intro = 1 Unit. Every publish tests a hypothesis about why that unit will (or won't) drive clicks, retention, and growth.
 
-**Input surface**: Slack Canvas in `#gl-youtube-operations`
+**Input surface**: Notion page (one page per episode: hypothesis + report)
+**Guide**: Slack Canvas in `#gl-youtube-operations` (usage guide for team, stays as-is)
 
 ## Output
 
@@ -59,23 +60,54 @@ D+14: Claude auto-generates Final Report
 
 ---
 
-### Phase 2: HYPOTHESIZE (Slack Canvas)
+### Phase 2: HYPOTHESIZE (Notion)
 
-Claude creates Canvas in `#gl-youtube-operations` via `slack_create_canvas`.
+Claude creates a Notion page via `notion-create-pages` (private section, Korean).
 
-Producer fills in per A/B/C set:
-- Title (exact)
-- Thumbnail (describe visual: text, layout, colors)
-- Intro flow (how intro connects)
-- Hypothesis (free-form: WHY will this drive clicks AND retention?)
-- Predicted CTR range
-- Kill condition
+**Page structure -- top section is the hypothesis (producer fills):**
+
+```
+# Media Impact Lab: [Series] EP[N] -- [Guest Name]
+
+## 1. 가설
+
+### Set A
+- **제목**: (정확한 제목)
+- **썸네일**: (이미지 설명: 텍스트, 레이아웃, 색상, 표정)
+- **인트로 흐름**: (인트로가 제목+썸네일과 어떻게 연결되는지)
+- **가설**: (왜 이 세트가 클릭 + 리텐션을 끌 것인지. 심리적 트리거, 타겟 시청자)
+- **예상 CTR**: __% - __%
+- **킬 조건**: (이 수치 이하면 실패로 판정)
+
+### Set B
+(동일 구조)
+
+### Set C (선택)
+(동일 구조)
+
+### 발행 전 메모
+(타이밍, 경쟁 영상, 시청자 분위기)
+
+## 2. 발행 로그
+(Claude가 채움)
+
+## 3. 보고서
+(Claude가 D+7, D+14에 자동 작성 -- 가설 검증 결과가 여기에)
+```
+
+The hypothesis section is the core. The rest of the page is filled by Claude.
+
+After creating the Notion page, post link to `#gl-youtube-operations` via Slack.
+
+**Notion parent page**: `33874768ec3780ccb297e2e3f0bb208a` (Media Impact Lab)
+**Guide page**: `33874768ec3780259b7ff183bb3a7e10`
 
 ---
 
 ### Phase 3: PUBLISH
 
-Record in Canvas:
+Record in Notion page (section 2. 발행 로그):
+- Thumbnail request thread link: auto-search `#request-썸네일` channel for guest name, attach Slack permalink
 - Publish timestamp
 - Sets live, A/B mode
 - Last-minute changes
@@ -265,10 +297,10 @@ Updates Week 1 Report with:
 - **5.10 Pattern Update**: New/confirmed/retired patterns for pattern_library.md
 
 #### Report Output
-- Write into Slack Canvas via `slack_update_canvas`
+- Write into same Notion page (section 3. 보고서) via `notion-update-page` -- hypothesis validation at the top
 - Save archive: `~/Desktop/Cowork/media-impact-lab/{file}.md`
-- Generate chart: `{file}_chart.html` (dark theme, Chart.js, standalone)
 - Post summary to `#gl-youtube-operations`
+- **Chart HTML**: only generated on request (`{file}_chart.html`, dark theme, Chart.js, CTR/watch time/sub conversion/A/B test focus)
 
 ---
 
