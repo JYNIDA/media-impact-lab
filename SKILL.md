@@ -84,9 +84,48 @@ Record in Canvas:
 
 ### Phase 4: MEASURE
 
+#### Data Collection Methods
+
+Two collection methods work together:
+
+**1. YouTube Analytics API** -- views, watch time, subs, engagement, retention
+**2. Studio Browse** -- Impressions, CTR, traffic source %, A/B thumbnail data
+
+Studio Browse uses a headless browser (gstack browse) with imported Google cookies to read data directly from YouTube Studio UI. This bypasses YouTube's API restrictions on Impressions/CTR.
+
+**Prerequisites**: Each team member must complete a one-time browser auth setup (see "Browser Auth Setup" section below).
+
+#### Studio Browse Flow
+
+**Reach tab (Impressions, CTR, traffic sources):**
+```
+1. goto "https://studio.youtube.com/video/{VIDEO_ID}/analytics/tab-reach_viewers/period-default"
+2. Wait 3s for data load
+3. Screenshot → save as {guest}_ep{N}_reach_H{hour}.png
+4. Read: Impressions, CTR, unique viewers
+5. Read traffic source breakdown (Browse %, Suggested %, Search %, External %)
+```
+
+**A/B Test report (Watch Time Share):**
+```
+1. goto "https://studio.youtube.com/video/{VIDEO_ID}/edit"
+2. Click "A/B Testing" button
+3. Wait 2s for modal load
+4. Screenshot → save as {guest}_ep{N}_ab_test.png (REQUIRED for every report)
+5. Read: Watch time share % per thumbnail, test status (running/completed)
+6. If "Test running..." → record status + estimated time remaining
+7. If completed → record winner + Watch time share per set
+```
+
+If browse session is expired (Google login page appears), post Slack alert:
+```
+Browse session expired. Run /setup-browser-cookies + handoff to re-authenticate.
+```
+
 #### Hourly Tracking (First 24h)
 
 Poll YouTube Analytics API hourly. Cumulative totals minus previous = delta.
+Poll Studio Browse for CTR + Impressions alongside API calls.
 
 **Adaptive stop**: CTR variance < 0.3% for 3 consecutive hours = stabilized. Post Slack alert.
 
@@ -142,28 +181,41 @@ filters=video==VIDEO_ID
 
 **API limitations:**
 - Hourly = cumulative polling trick (native = daily)
-- A/B thumbnail results: Studio UI only
-- CTR by traffic source: unreliable via API
+- A/B thumbnail results: Studio UI only → now collected via Studio Browse
+- CTR by traffic source: unreliable via API → now collected via Studio Browse
+
+#### Screenshots (attached to every report)
+
+All screenshots saved to `~/Desktop/Cowork/media-impact-lab/screenshots/{guest}_ep{N}/`:
+
+| Screenshot | When | Why |
+|-----------|------|-----|
+| `reach_H{hour}.png` | Every hourly poll | CTR graph trajectory over time |
+| `reach_D7.png` | D+7 checkpoint | CTR + Impressions + traffic sources at D+7 |
+| `reach_D14.png` | D+14 checkpoint | Final CTR + Impressions state |
+| `ab_test.png` | D+7 and D+14 | **REQUIRED** -- shows which thumbnail + title won with Watch Time Share % |
+| `retention_D7.png` | D+7 checkpoint | Retention curve shape |
+
+The A/B test screenshot is the most critical -- it visually shows which thumbnail image and title combination drove more watch time, which numbers alone can't convey.
 
 #### Manual Fallback
-Producer fills Canvas measurement table. Captures API-exclusive data: A/B Watch Time Share, traffic source CTR.
+If Studio Browse fails (cookie expired, UI layout changed), producer fills Canvas measurement table manually.
 
 #### Slack Alert (after Auto metrics are filled)
 
-After `impact lab measure` fills the Auto rows in the Canvas, post this alert to `#gl-youtube-operations`:
+After `impact lab measure` fills both API + Browse data in the Canvas, post this alert to `#gl-youtube-operations`:
 
 ```
-D+7 Auto metrics collected for [Episode Name].
+D+7 metrics collected for [Episode Name].
 Canvas updated: [canvas link]
 
-Studio에서 아래 항목 확인하고 빈 칸 채워주세요:
-- Impressions
-- CTR
-- Browse % / Suggested % / Search %
-- A/B winner (Set __)
-- A/B Watch Time Share
+All metrics auto-collected (API + Studio Browse):
+✓ Views, watch time, subs, engagement, retention
+✓ Impressions, CTR, traffic sources
+✓ A/B thumbnail Watch Time Share
+✓ Screenshots: CTR trajectory, A/B test report, retention curve
 
-다 채우면 "impact lab report" 실행해서 리포트 생성합니다.
+"impact lab report" 실행하면 리포트 자동 생성됩니다.
 ```
 
 ---
@@ -192,14 +244,19 @@ Two reports, auto-triggered:
 | Engagement rate | X% | TBD | |
 
 **5.4 CTR Trajectory**: Hourly curve shape, stabilization point, what it means.
+- Attach: `reach_H*.png` screenshots showing CTR graph progression over time
 
-**5.5 Retention Analysis**: First 30s, intro-to-body drop, key drop-offs, relative vs YouTube avg.
+**5.5 A/B Test Result**: Winner thumbnail + Watch Time Share per set.
+- Attach: `ab_test.png` screenshot (REQUIRED -- shows thumbnail images + title + Watch Time Share)
 
-**5.6 Growth Analysis**: Net subs, conversion rate, traffic source mix.
+**5.6 Retention Analysis**: First 30s, intro-to-body drop, key drop-offs, relative vs YouTube avg.
+- Attach: `retention_D7.png` screenshot
 
-**5.7 Lessons Learned**: What worked, what didn't, surprises.
+**5.7 Growth Analysis**: Net subs, conversion rate, traffic source mix.
 
-**5.8 Next Episode Application**: 2-3 concrete things to try next.
+**5.8 Lessons Learned**: What worked, what didn't, surprises.
+
+**5.9 Next Episode Application**: 2-3 concrete things to try next.
 
 #### Final Report (D+14)
 
@@ -250,25 +307,39 @@ Created by `impact lab start`:
 
 ### What You Do
 
-1. **Before publish**: Fill Set A/B/C in the Slack Canvas (title, thumbnail description, intro flow, hypothesis)
-2. **After publish**: Record hourly CTR from YouTube Studio until it stabilizes
-3. **D+7**: Claude sends a Slack alert. Fill in Manual items from Studio (Impressions, CTR, traffic sources, A/B results)
-4. **Read the report**: Claude auto-generates analysis. Review lessons and apply to next episode.
+1. **One-time setup**: Run `/setup-browser-cookies` + `handoff` to authenticate (see Browser Auth Setup below)
+2. **Before publish**: Fill Set A/B/C in the Slack Canvas (title, thumbnail description, intro flow, hypothesis)
+3. **D+7**: Claude auto-collects everything (API + Studio Browse). No manual data entry needed.
+4. **Read the report**: Claude auto-generates analysis with screenshots attached. Review lessons and apply to next episode.
 
 ### What Claude Does
 
 1. Creates Canvas and shares link in `#gl-youtube-operations`
-2. Collects D+7 Auto metrics via YouTube API (views, watch time, subs, engagement, retention)
-3. Sends Slack alert when Manual items are needed
-4. Auto-generates Week 1 Report (D+7) and Final Report (D+14)
-5. Calculates derived metrics (sub conversion rate, impact scorecard)
+2. Collects metrics via YouTube API (views, watch time, subs, engagement, retention)
+3. Collects metrics via Studio Browse (Impressions, CTR, traffic sources, A/B status)
+4. Tracks hourly CTR via Studio Browse until stabilized
+5. Auto-generates Week 1 Report (D+7) and Final Report (D+14)
+6. Calculates derived metrics (sub conversion rate, impact scorecard)
 
 ### Auto vs. Manual Data
 
-| Source | Metrics | Why |
+| Source | Metrics | How |
 |--------|---------|-----|
-| **Auto** (YouTube API) | Views, avg duration, avg view %, subs gained/lost, likes, comments, shares, retention curve | API provides these |
-| **Manual** (YouTube Studio) | Impressions, CTR, A/B Watch Time Share, A/B winner, traffic source % | YouTube blocks these from API |
+| **Auto** (YouTube API) | Views, avg duration, avg view %, subs gained/lost, likes, comments, shares, retention curve | API call |
+| **Auto** (Studio Browse) | Impressions, CTR, traffic source %, A/B Watch Time Share, unique viewers | Headless browser reads YouTube Studio UI |
+
+All metrics are now fully automated. No manual data entry required.
+
+### Browser Auth Setup (One-Time per Team Member)
+
+Each team member needs to authenticate once so Claude can access YouTube Studio on their behalf:
+
+1. Run `/setup-browser-cookies` in Claude Code
+2. In the picker UI, import `youtube.com` + `google.com` cookies from Chrome
+3. If Google asks for password (cookie session mismatch), Claude runs `handoff`
+4. A browser window opens -- log into your Google account with YouTube Studio access
+5. Tell Claude "done" -- Claude runs `resume` and verifies Studio access
+6. Cookies last ~2 weeks. Re-run this setup when session expires.
 
 ### How to Write a Good Hypothesis
 
@@ -290,4 +361,4 @@ YouTube Analytics API:
 - **OAuth consent screen**: External
 - **Scopes**: `yt-analytics.readonly`, `yt-analytics-monetary.readonly`, `youtube.readonly`
 - **Channels**: EO Global + EO Korea (both authenticated)
-- **Limitation**: Impressions/CTR not available via API. YouTube intentionally blocks this. Use Studio UI.
+- **Limitation**: Impressions/CTR not available via API. YouTube intentionally blocks this. Collected via Studio Browse (headless browser accessing Studio UI).
