@@ -1,0 +1,4 @@
+lib/pw-profile/
+__pycache__/
+*.pyc
+.DS_Store

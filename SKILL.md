@@ -62,13 +62,15 @@ D+14: Claude auto-generates Final Report
 
 ### Phase 2: HYPOTHESIZE (Notion)
 
-Claude creates a Notion page via `notion-create-pages` (private section, Korean).
+Claude creates a row in the **2Q database** via `notion-create-pages` with `data_source_id`.
 
-**Page structure -- top section is the hypothesis (producer fills):**
+- **Data source ID**: `33874768-ec37-80e4-9c37-000bea9f211e` (2Q table)
+- **Name format**: `[TTM] ep.N - Guest Name` / `[FF] Company - Founder Name`
+- No "Media Impact Lab" prefix in the title -- episode name only
+
+**Page content -- top section is the hypothesis (producer fills):**
 
 ```
-# Media Impact Lab: [Series] EP[N] -- [Guest Name]
-
 ## 1. 가설
 
 ### Set A
@@ -97,9 +99,12 @@ Claude creates a Notion page via `notion-create-pages` (private section, Korean)
 
 The hypothesis section is the core. The rest of the page is filled by Claude.
 
-After creating the Notion page, post link to `#gl-youtube-operations` via Slack.
+After creating the DB row:
+1. Search `#request-썸네일` for guest name -- if thumbnail thread exists, include permalink in Slack message
+2. Post link to `#gl-youtube-operations` via Slack (bot token, not MCP)
 
 **Notion parent page**: `33874768ec3780ccb297e2e3f0bb208a` (Media Impact Lab)
+**2Q Data source ID**: `33874768-ec37-80e4-9c37-000bea9f211e`
 **Guide page**: `33874768ec3780259b7ff183bb3a7e10`
 
 ---
@@ -120,44 +125,31 @@ Record in Notion page (section 2. 발행 로그):
 
 Two collection methods work together:
 
-**1. YouTube Analytics API** -- views, watch time, subs, engagement, retention
-**2. Studio Browse** -- Impressions, CTR, traffic source %, A/B thumbnail data
+**1. YouTube Analytics API** -- whatever the API can return (views trend, watch time, subs, engagement, retention curve when available)
+**2. Playwright Studio scraper (REQUIRED)** -- everything the API can't return: Impressions, CTR, traffic source %, A/B watch-time share, retention when API is delayed, any Studio-only panel
 
-Studio Browse uses a headless browser (gstack browse) with imported Google cookies to read data directly from YouTube Studio UI. This bypasses YouTube's API restrictions on Impressions/CTR.
+**Hard rule**: anything not available via YouTube Analytics API MUST be collected via the Playwright scraper at `~/.claude/skills/media-impact-lab/lib/pw-studio.py`. Do not fall back to manual Canvas entry, do not skip Studio data, do not try `gstack browse` / `fetch-reach.sh` (those are deprecated). If Playwright session is not logged in, run the login flow below — never silently degrade to "API only".
 
-**Prerequisites**: Each team member must complete a one-time browser auth setup (see "Browser Auth Setup" section below).
+#### Playwright Studio Flow
 
-#### Studio Browse Flow
+```bash
+PY=/Users/jiyooneo/.vit/venv/bin/python3
+SCRAPER=~/.claude/skills/media-impact-lab/lib/pw-studio.py
 
-**Reach tab (Impressions, CTR, traffic sources):**
-```
-1. goto "https://studio.youtube.com/video/{VIDEO_ID}/analytics/tab-reach_viewers/period-default"
-2. Wait 3s for data load
-3. Screenshot → save as {guest}_ep{N}_reach_H{hour}.png
-4. Read: Impressions, CTR, unique viewers
-5. Read traffic source breakdown (Browse %, Suggested %, Search %, External %)
-```
+# First-time / session-expired login (opens headful Chromium, user signs in once)
+$PY $SCRAPER login
 
-**A/B Test report (Watch Time Share):**
-```
-1. goto "https://studio.youtube.com/video/{VIDEO_ID}/edit"
-2. Click "A/B Testing" button
-3. Wait 2s for modal load
-4. Screenshot → save as {guest}_ep{N}_ab_test.png (REQUIRED for every report)
-5. Read: Watch time share % per thumbnail, test status (running/completed)
-6. If "Test running..." → record status + estimated time remaining
-7. If completed → record winner + Watch time share per set
+# Fetch all Studio tabs for a video — Reach, Overview, Engagement, Audience, A/B modal
+$PY $SCRAPER fetch "$VIDEO_ID" "{guest}_ep{N}"
+# → screenshots + {guest}_ep{N}_data.json in ~/Desktop/Cowork/media-impact-lab/screenshots/{guest}_ep{N}/
 ```
 
-If browse session is expired (Google login page appears), post Slack alert:
-```
-Browse session expired. Run /setup-browser-cookies + handoff to re-authenticate.
-```
+Persistent Chromium profile lives at `~/.claude/skills/media-impact-lab/lib/pw-profile/` (gitignored — contains your Google session). Cookies persist across runs, typically months. When they eventually expire, the fetch command prints `ERROR: session not logged in` — re-run `login` mode and the scrape keeps working.
 
 #### Hourly Tracking (First 24h)
 
 Poll YouTube Analytics API hourly. Cumulative totals minus previous = delta.
-Poll Studio Browse for CTR + Impressions alongside API calls.
+Poll Playwright scraper (`pw-studio.py fetch`) for CTR + Impressions + A/B share alongside API calls.
 
 **Adaptive stop**: CTR variance < 0.3% for 3 consecutive hours = stabilized. Post Slack alert.
 
@@ -213,8 +205,8 @@ filters=video==VIDEO_ID
 
 **API limitations:**
 - Hourly = cumulative polling trick (native = daily)
-- A/B thumbnail results: Studio UI only → now collected via Studio Browse
-- CTR by traffic source: unreliable via API → now collected via Studio Browse
+- A/B thumbnail results: Studio UI only → collected via Playwright scraper
+- CTR by traffic source: unreliable via API → collected via Playwright scraper
 
 #### Screenshots (attached to every report)
 
@@ -231,7 +223,10 @@ All screenshots saved to `~/Desktop/Cowork/media-impact-lab/screenshots/{guest}_
 The A/B test screenshot is the most critical -- it visually shows which thumbnail image and title combination drove more watch time, which numbers alone can't convey.
 
 #### Manual Fallback
-If Studio Browse fails (cookie expired, UI layout changed), producer fills Canvas measurement table manually.
+If the Playwright scraper fails (session expired, UI layout changed), **do not fall back to manual entry**. Options in order:
+1. Re-run `pw-studio.py login` to refresh the session
+2. If UI selector broke, update `pw-studio.py` (DOM changed) — look at the saved screenshot to confirm what rendered
+3. Only if both fail, flag to user and hold the report until scraper works
 
 #### Slack Alert (after Auto metrics are filled)
 
@@ -241,7 +236,7 @@ After `impact lab measure` fills both API + Browse data in the Canvas, post this
 D+7 metrics collected for [Episode Name].
 Canvas updated: [canvas link]
 
-All metrics auto-collected (API + Studio Browse):
+All metrics auto-collected (API + Playwright scraper):
 ✓ Views, watch time, subs, engagement, retention
 ✓ Impressions, CTR, traffic sources
 ✓ A/B thumbnail Watch Time Share
@@ -359,15 +354,15 @@ curl -s -X POST "$WEBHOOK_URL" -H 'Content-Type: application/json' -d '{
 
 1. **One-time setup**: Run `/setup-browser-cookies` + `handoff` to authenticate (see Browser Auth Setup below)
 2. **Before publish**: Fill Set A/B/C in the Slack Canvas (title, thumbnail description, intro flow, hypothesis)
-3. **D+7**: Claude auto-collects everything (API + Studio Browse). No manual data entry needed.
+3. **D+7**: Claude auto-collects everything (API + Playwright scraper). No manual data entry needed.
 4. **Read the report**: Claude auto-generates analysis with screenshots attached. Review lessons and apply to next episode.
 
 ### What Claude Does
 
 1. Creates Canvas and shares link in `#gl-youtube-operations`
 2. Collects metrics via YouTube API (views, watch time, subs, engagement, retention)
-3. Collects metrics via Studio Browse (Impressions, CTR, traffic sources, A/B status)
-4. Tracks hourly CTR via Studio Browse until stabilized
+3. Collects metrics via Playwright scraper (Impressions, CTR, traffic sources, A/B status, retention when API delays)
+4. Tracks hourly CTR via Playwright scraper until stabilized
 5. Auto-generates Week 1 Report (D+7) and Final Report (D+14)
 6. Calculates derived metrics (sub conversion rate, impact scorecard)
 
@@ -376,7 +371,7 @@ curl -s -X POST "$WEBHOOK_URL" -H 'Content-Type: application/json' -d '{
 | Source | Metrics | How |
 |--------|---------|-----|
 | **Auto** (YouTube API) | Views, avg duration, avg view %, subs gained/lost, likes, comments, shares, retention curve | API call |
-| **Auto** (Studio Browse) | Impressions, CTR, traffic source %, A/B Watch Time Share, unique viewers | Headless browser reads YouTube Studio UI |
+| **Auto** (Playwright scraper) | Impressions, CTR, traffic source %, A/B Watch Time Share, unique viewers, retention curve (fallback) | Headful Chromium with persistent Google session, reads Studio UI |
 
 All metrics are now fully automated. No manual data entry required.
 
@@ -411,4 +406,4 @@ YouTube Analytics API:
 - **OAuth consent screen**: External
 - **Scopes**: `yt-analytics.readonly`, `yt-analytics-monetary.readonly`, `youtube.readonly`
 - **Channels**: EO Global + EO Korea (both authenticated)
-- **Limitation**: Impressions/CTR not available via API. YouTube intentionally blocks this. Collected via Studio Browse (headless browser accessing Studio UI).
+- **Limitation**: Impressions/CTR not available via API. YouTube intentionally blocks this. Collected via Playwright scraper (`pw-studio.py`) which drives a real Chromium against the Studio UI.
