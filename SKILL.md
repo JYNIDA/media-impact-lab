@@ -331,20 +331,69 @@ Created by `impact lab start`:
 - **Webhook** (legacy, non-editable): stored in config under `slack.impact_lab_webhook`
 - **Thumbnail requests**: `#request-썸네일` (channel ID: `C033Z5AC3FA`)
 
-### Slack Message Format (use bot token API, not MCP or webhook)
+### Slack Message Format — HARD REQUIREMENTS
 
-Header format: `[Series Name] Guest/Company - Founder Name`
-Examples: `[Founder Focused] Paraform - John Kim`, `[The Thinking Mode] EP7 - Bharat Chandar`
+**Two non-negotiable rules (apply to every Impact Lab Slack post, regardless of who is running this skill):**
+
+1. **Identity: always post as the Media Impact Lab bot, never as a user.**
+   - Required path: `curl` against `https://slack.com/api/chat.postMessage` with `Authorization: Bearer $BOT_TOKEN` (bot token from config).
+   - Forbidden paths: MCP Slack tools (`mcp__claude_ai_Slack__slack_send_message` or equivalents), Slack desktop app typing, webhook URL when bot token is available.
+   - Why: The bot identity is the team's visual signal that this is an automated D+N report. A post from a user account reads as a hand-typed summary and breaks that signal. Bot-posted messages can also be re-edited programmatically; user-posted messages cannot.
+
+2. **Length and content: terse, numbers-led. No prose lessons in Slack.**
+   - Target: ~10 to 15 short lines, readable in one glance.
+   - Always include (in this order): (a) header `[Series] Guest Name — D+N timestamp`, (b) core numeric snapshot in a single pipe-delimited line, (c) CTR trajectory with arrows, (d) A/B test state (variants + winner or % lead), (e) Notion full-report link + thumbnail thread link.
+   - Never include in Slack: multi-paragraph lessons, pre-publish iteration log, full hypothesis tables, "what to watch at D+7" prose. Those belong in the Notion page only.
+   - Why: The Slack post is an alert and a link to the full report. Details belong in Notion. A 30-line Slack summary competes with the Notion page and buries the numbers.
+
+### Recommended Terse Template (target format, confirmed on QFEX 2026-04-21)
+
+Time-frame header must be accurate. Use `Publish Day, H+N` on upload day; switch to `D+1`, `D+7`, `D+14` only once we've actually crossed that boundary. Never label a same-day report as D+1.
+
+```
+:test_tube: [Series] Guest Name — Publish Day, H+N (YYYY-MM-DD HH:MM PDT)
+  or
+:test_tube: [Series] Guest Name — D+N (YYYY-MM-DD HH:MM PDT)
+
+Views X.XK | Realtime X | Watch X.Xh (±X.Xh vs usual) | AVD M:SS (±M:SS) | Like XX.X% (ch avg XX.X%)
+
+CTR trajectory (over N active hours, N manual thumbnail swaps):
+X.X% → X.X% → X.X%
+
+Native title A/B — XX% [A|B] wins, significance in ~Nd:
+• A: "..." (origin)
+• B: "..." (origin)
+
+Lessons so far:
+• 2-3 short bullets, one line each. No prose paragraphs.
+• Grounded in what today's data actually shows, not generic advice.
+
+Full report: <NOTION_URL|Notion> | Thumbnail iter: <SLACK_THREAD_URL|thread>
+```
+
+### Bot-Token Curl Pattern
 
 ```bash
-curl -s -X POST "$WEBHOOK_URL" -H 'Content-Type: application/json' -d '{
+TOKEN=$(python3 -c "import json; print(json.load(open('/Users/jiyooneo/.claude/skills/weekly-meeting/config/config.json'))['slack']['impact_lab_bot_token'])")
+curl -s -X POST "https://slack.com/api/chat.postMessage" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json; charset=utf-8" \
+  -d @- <<'JSON'
+{
+  "channel": "C09UQSSK40M",
   "blocks": [
-    {"type": "header", "text": {"type": "plain_text", "text": "🧪 [SERIES] Guest - Name", "emoji": true}},
-    {"type": "section", "text": {"type": "mrkdwn", "text": "<NOTION_URL|📝 Notion page> | <THUMBNAIL_THREAD_URL|🎨 Thumbnail thread>"}},
-    {"type": "section", "text": {"type": "mrkdwn", "text": "Fill in your hypothesis (Set A/B) before publish.\n→ Title, thumbnail description, intro flow, and *WHY this will work*"}}
+    {"type": "section", "text": {"type": "mrkdwn", "text": ":test_tube: *[Founder Focused] Guest Name — D+1 (2026-04-21 14:35 PDT)*"}},
+    {"type": "section", "text": {"type": "mrkdwn", "text": "Views 2.8K | Realtime 153 | Watch 135.8h (−74.2h) | AVD 2:56 (−0:32)"}},
+    {"type": "section", "text": {"type": "mrkdwn", "text": "CTR trajectory (5h, 4 manual swaps): 4.4% → 4.6% → 4.76%"}},
+    {"type": "section", "text": {"type": "mrkdwn", "text": "*Native title A/B — 49% B wins, significance ~3d:*\n• A: \"Why This Ex-Quant Quit a $10B/Day Job...\" (Set D)\n• B: \"I Quit My 7-Figure Job on Wall Street // Here's Why\" (Jay iter)"}},
+    {"type": "context", "elements": [{"type": "mrkdwn", "text": "<NOTION_URL|Full report> | <THREAD_URL|Thumbnail thread>"}]}
   ]
-}'
+}
+JSON
 ```
+
+Header format for the first section: `[Series Name] Guest/Company - Founder Name`
+Examples: `[Founder Focused] QFEX - Annanay Kapila`, `[The Thinking Mode] EP7 - Bharat Chandar`
 
 ---
 
