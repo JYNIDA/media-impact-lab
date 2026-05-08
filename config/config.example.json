@@ -1,0 +1,6 @@
+{
+  "slack": {
+    "impact_lab_bot_token": "xoxb-REPLACE-WITH-YOUR-TOKEN",
+    "impact_lab_webhook": "https://hooks.slack.com/services/REPLACE-WITH-YOUR-WEBHOOK"
+  }
+}

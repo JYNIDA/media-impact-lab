@@ -3,6 +3,30 @@
 ## Trigger
 Use when: "impact lab", "media impact lab", "임팩트 랩", "발행 분석", "퍼포먼스 분석", "에피소드 분석", "가설 검증", "성과 분석"
 
+## Setup (per user, one-time)
+
+The Slack-posting flow requires a bot token. Each teammate populates their own local config. The skill is fully self-contained — no dependency on the `weekly-meeting` skill for Slack.
+
+```bash
+# 1) Create config from example
+cp ~/.claude/skills/media-impact-lab/config/config.example.json \
+   ~/.claude/skills/media-impact-lab/config/config.json
+
+# 2) Open and replace the placeholder values
+#    - impact_lab_bot_token: ask Jiyoon (1Password vault preferred)
+#    - impact_lab_webhook: same source
+$EDITOR ~/.claude/skills/media-impact-lab/config/config.json
+
+# 3) Verify the bot identity is reachable
+TOKEN=$(python3 -c "import json,os;print(json.load(open(os.path.expanduser('~/.claude/skills/media-impact-lab/config/config.json')))['slack']['impact_lab_bot_token'])")
+curl -s "https://slack.com/api/auth.test" -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
+# expected: "ok": true, "user": "media-impact-lab" (or similar bot name)
+```
+
+`config/config.json` is gitignored. Never commit it.
+
+**YouTube OAuth (separate)**: the `measure` flow's API access still reads from `~/.claude/skills/weekly-meeting/config/config.json` (TODO: migrate). If you only post Slack reports / fill Canvas hypotheses, you don't need this.
+
 ## Overview
 
 A per-episode experiment and analysis system. Measures full video impact: CTR, retention, subscriber conversion, watch time, traffic distribution.
@@ -327,8 +351,9 @@ Created by `impact lab start`:
 ## Slack
 - **Channel**: `#gl-youtube-operations` (channel ID: `C09UQSSK40M`)
 - **Fallback**: `#team-gl-media`
-- **Bot Token** (Block Kit, editable): stored in `~/.claude/skills/weekly-meeting/config/config.json` under `slack.impact_lab_bot_token`
-- **Webhook** (legacy, non-editable): stored in config under `slack.impact_lab_webhook`
+- **Bot Token** (Block Kit, editable): stored in `~/.claude/skills/media-impact-lab/config/config.json` under `slack.impact_lab_bot_token`
+- **Webhook** (legacy, non-editable): stored in same file under `slack.impact_lab_webhook`
+- **First-time setup** (per teammate): see `## Setup (per user)` below
 - **Thumbnail requests**: `#request-썸네일` (channel ID: `C033Z5AC3FA`)
 
 ### Slack Message Format — HARD REQUIREMENTS
@@ -374,7 +399,7 @@ Full report: <NOTION_URL|Notion> | Thumbnail iter: <SLACK_THREAD_URL|thread>
 ### Bot-Token Curl Pattern
 
 ```bash
-TOKEN=$(python3 -c "import json; print(json.load(open('/Users/jiyooneo/.claude/skills/weekly-meeting/config/config.json'))['slack']['impact_lab_bot_token'])")
+TOKEN=$(python3 -c "import json, os; print(json.load(open(os.path.expanduser('~/.claude/skills/media-impact-lab/config/config.json')))['slack']['impact_lab_bot_token'])")
 curl -s -X POST "https://slack.com/api/chat.postMessage" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json; charset=utf-8" \

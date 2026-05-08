@@ -7,11 +7,24 @@ Every publish is an experiment. Record your hypothesis before publishing, track 
 ## Install
 
 ```bash
-# Clone into your Claude Code skills directory
+# 1) Clone into your Claude Code skills directory
 git clone https://github.com/JYNIDA/media-impact-lab.git ~/.claude/skills/media-impact-lab
+
+# 2) Set up your local config (Slack bot token)
+cp ~/.claude/skills/media-impact-lab/config/config.example.json \
+   ~/.claude/skills/media-impact-lab/config/config.json
+# Then edit config.json and replace the two REPLACE-ME placeholders.
+# Bot token + webhook: ask Jiyoon (1Password preferred).
+
+# 3) Verify
+TOKEN=$(python3 -c "import json,os;print(json.load(open(os.path.expanduser('~/.claude/skills/media-impact-lab/config/config.json')))['slack']['impact_lab_bot_token'])")
+curl -s https://slack.com/api/auth.test -H "Authorization: Bearer $TOKEN"
+# expected: {"ok": true, ...}
 ```
 
-After cloning, the skill is immediately available in Claude Code.
+After step 2, the skill is available in Claude Code.
+
+`config/config.json` is gitignored.
 
 ## Quick Start
 
