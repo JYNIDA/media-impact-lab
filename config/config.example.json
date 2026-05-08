@@ -2,5 +2,27 @@
   "slack": {
     "impact_lab_bot_token": "xoxb-REPLACE-WITH-YOUR-TOKEN",
     "impact_lab_webhook": "https://hooks.slack.com/services/REPLACE-WITH-YOUR-WEBHOOK"
+  },
+  "youtube": {
+    "api_key": "REPLACE-WITH-YOUTUBE-DATA-API-V3-KEY",
+    "channel_id": "UClWTCPVi-AU9TeCN6FkGARg",
+    "channel_handle": "@eoglobal"
+  },
+  "youtube_oauth": {
+    "client_id": "REPLACE-WITH-OAUTH-CLIENT-ID.apps.googleusercontent.com",
+    "client_secret": "REPLACE-WITH-OAUTH-CLIENT-SECRET",
+    "scopes": [
+      "https://www.googleapis.com/auth/yt-analytics.readonly",
+      "https://www.googleapis.com/auth/yt-analytics-monetary.readonly",
+      "https://www.googleapis.com/auth/youtube.readonly"
+    ],
+    "channels": {
+      "eo_global": {
+        "name": "EO Global",
+        "channel_id": "UClWTCPVi-AU9TeCN6FkGARg",
+        "handle": "@eoglobal",
+        "refresh_token": "REPLACE-WITH-REFRESH-TOKEN"
+      }
+    }
   }
 }

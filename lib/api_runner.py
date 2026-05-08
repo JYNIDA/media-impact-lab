@@ -11,7 +11,7 @@ Never prints credentials. Stdout is metrics-only.
 import json, sys, os, urllib.request, urllib.parse, urllib.error, datetime as dt
 from pathlib import Path
 
-CFG_PATH = Path.home() / ".claude/skills/weekly-meeting/config/config.json"
+CFG_PATH = Path.home() / ".claude/skills/media-impact-lab/config/config.json"
 OUT_ROOT = Path.home() / "Desktop/Cowork/media-impact-lab/screenshots"
 
 

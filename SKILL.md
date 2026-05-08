@@ -25,7 +25,9 @@ curl -s "https://slack.com/api/auth.test" -H "Authorization: Bearer $TOKEN" | py
 
 `config/config.json` is gitignored. Never commit it.
 
-**YouTube OAuth (separate)**: the `measure` flow's API access still reads from `~/.claude/skills/weekly-meeting/config/config.json` (TODO: migrate). If you only post Slack reports / fill Canvas hypotheses, you don't need this.
+**YouTube OAuth (only for `measure` flow)**: the `youtube_oauth` and `youtube` sections in the same `config.json` carry Google OAuth credentials and the YouTube Data API key. Most teammates can leave the example placeholders untouched — these are only needed if you personally run `impact lab measure` (i.e. drive the Analytics API). Posting Slack reports and filling Canvas hypotheses do not require them.
+
+If the OAuth refresh token returns `invalid_grant: Token has been expired or revoked`, re-run the OAuth consent flow (External, scopes: `yt-analytics.readonly`, `yt-analytics-monetary.readonly`, `youtube.readonly`) and replace the `refresh_token` for the `eo_global` channel.
 
 ## Overview
 
