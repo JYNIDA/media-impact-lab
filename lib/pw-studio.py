@@ -46,8 +46,18 @@ def is_logged_in(page) -> bool:
         url = page.url
         if "accounts.google.com" in url or "/signin" in url:
             return False
-        # Studio dashboard URL contains /channel/
-        return "/channel/" in url or page.locator("ytcp-navigation-drawer").count() > 0
+        if "/channel/" in url:
+            return True
+        for sel in [
+            "ytcp-navigation-drawer",
+            "ytcp-entity-page",
+            "ytcs-side-navigation-section-renderer",
+            "tp-yt-app-drawer",
+            "#avatar-btn",
+        ]:
+            if page.locator(sel).count() > 0:
+                return True
+        return "studio.youtube.com" in url
     except Exception:
         return False
 
