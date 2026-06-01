@@ -27,7 +27,13 @@ curl -s "https://slack.com/api/auth.test" -H "Authorization: Bearer $TOKEN" | py
 
 **YouTube OAuth (only for `measure` flow)**: the `youtube_oauth` and `youtube` sections in the same `config.json` carry Google OAuth credentials and the YouTube Data API key. Most teammates can leave the example placeholders untouched — these are only needed if you personally run `impact lab measure` (i.e. drive the Analytics API). Posting Slack reports and filling Canvas hypotheses do not require them.
 
-If the OAuth refresh token returns `invalid_grant: Token has been expired or revoked`, re-run the OAuth consent flow (External, scopes: `yt-analytics.readonly`, `yt-analytics-monetary.readonly`, `youtube.readonly`) and replace the `refresh_token` for the `eo_global` channel.
+If the OAuth refresh token returns `invalid_grant: Token has been expired or revoked`, re-run the OAuth consent flow using the included helper script:
+
+```bash
+python3 ~/.claude/skills/media-impact-lab/lib/oauth_refresh.py
+```
+
+This opens a browser for Google consent, captures the code via a local callback server (port 8765), and auto-saves the new `refresh_token` to `config.json`. No manual token handling needed.
 
 ## Overview
 
@@ -171,6 +177,21 @@ $PY $SCRAPER fetch "$VIDEO_ID" "{guest}_ep{N}"
 ```
 
 Persistent Chromium profile lives at `~/.claude/skills/media-impact-lab/lib/pw-profile/` (gitignored — contains your Google session). Cookies persist across runs, typically months. When they eventually expire, the fetch command prints `ERROR: session not logged in` — re-run `login` mode and the scrape keeps working.
+
+**Playwright is single-instance only.** The persistent profile uses a `SingletonLock` — launching two `pw-studio.py fetch` calls in parallel causes `Failed to create ProcessSingleton` and both fail. Always run fetches sequentially:
+
+```bash
+# Correct: sequential
+$PY $SCRAPER fetch "$VIDEO_ID_1" "slug1"
+$PY $SCRAPER fetch "$VIDEO_ID_2" "slug2"
+
+# Wrong: parallel (will fail with profile lock error)
+$PY $SCRAPER fetch "$VIDEO_ID_1" "slug1" &
+$PY $SCRAPER fetch "$VIDEO_ID_2" "slug2" &
+wait
+```
+
+If you see `Failed to create ProcessSingleton`, kill any lingering Chrome for Testing processes first: `pkill -f "pw-profile"`, then retry.
 
 #### Hourly Tracking (First 24h)
 
