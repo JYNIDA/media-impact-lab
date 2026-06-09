@@ -25,7 +25,7 @@ import sys
 import urllib.request
 from pathlib import Path
 
-MODEL = "claude-opus-4-8"
+MODEL = "claude-sonnet-4-6"
 
 # Local config fallback (same file the rest of the skill uses).
 CFG_CANDIDATES = [
