@@ -74,3 +74,36 @@ YouTube does not provide Impressions/CTR data via API. This is an intentional re
 - Claude Code with Slack MCP connected
 - YouTube Analytics API OAuth configured (admin setup, one-time)
 - Access to `#gl-youtube-operations` Slack channel
+
+## Altos Ventures Daily Digest
+
+Get a daily Slack DM summarizing Altos Ventures news — press coverage,
+funding/investment, official posts/SNS, and portfolio-company news. Claude
+gathers the last 24–48h via web search and DMs you a Korean digest.
+
+Runs automatically via GitHub Actions
+([`.github/workflows/altos-daily-updates.yml`](.github/workflows/altos-daily-updates.yml))
+on a daily cron (08:00 KST), and can be triggered manually from the **Actions**
+tab.
+
+**Setup — add three repository secrets** (Settings → Secrets and variables →
+Actions):
+
+| Secret | Value |
+|--------|-------|
+| `ANTHROPIC_API_KEY` | Claude API key (console.anthropic.com) |
+| `SLACK_BOT_TOKEN` | Slack bot token with `chat:write` + `im:write` scopes |
+| `SLACK_USER_ID` | Your Slack member ID, e.g. `U0XXXXXXX` (Slack profile → ⋯ → Copy member ID) |
+
+**Run it locally / preview:**
+
+```bash
+# Preview without posting (reads config/config.json or env vars)
+python3 lib/altos_digest.py --dry-run
+
+# Gather + DM to yourself
+ANTHROPIC_API_KEY=... SLACK_BOT_TOKEN=... SLACK_USER_ID=U0XXXXXXX \
+  python3 lib/altos_digest.py
+```
+
+To change the delivery time, edit the `cron` line in the workflow (it's in UTC).

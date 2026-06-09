@@ -1,0 +1,40 @@
+name: Altos Ventures Daily Updates
+
+# Gathers the last 24-48h of Altos Ventures news and DMs a Korean digest to
+# the configured Slack user. Requires three repository secrets:
+#   ANTHROPIC_API_KEY  - Claude API key
+#   SLACK_BOT_TOKEN    - Slack bot token (scopes: chat:write, im:write)
+#   SLACK_USER_ID      - Slack member ID to DM (e.g. U0XXXXXXX)
+
+on:
+  schedule:
+    # 08:00 KST every day (= 23:00 UTC the previous day)
+    - cron: "0 23 * * *"
+  workflow_dispatch: {}  # allow manual runs from the Actions tab
+
+permissions:
+  contents: read
+
+concurrency:
+  group: altos-daily-updates
+  cancel-in-progress: false
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install --upgrade anthropic
+
+      - name: Send Altos Ventures digest
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_USER_ID: ${{ secrets.SLACK_USER_ID }}
+        run: python3 lib/altos_digest.py
