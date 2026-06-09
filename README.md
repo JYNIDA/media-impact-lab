@@ -94,6 +94,7 @@ Actions):
 | `ANTHROPIC_API_KEY` | Claude API key (console.anthropic.com) |
 | `SLACK_BOT_TOKEN` | Slack bot token with `chat:write` + `im:write` scopes |
 | `SLACK_USER_ID` | Your Slack member ID, e.g. `U0XXXXXXX` (Slack profile → ⋯ → Copy member ID) |
+| `ALTOS_BRIEF` _(optional)_ | A steering brief injected into the prompt (tracked companies, themes, preferred outlets). Kept in a secret because this repo is public — never commit brief content. For local runs, put it in `config/altos_brief.md` (gitignored). |
 
 **Run it locally / preview:**
 

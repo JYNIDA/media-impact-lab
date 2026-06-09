@@ -55,7 +55,25 @@ def _resolve_creds():
     return {k: v.strip() if isinstance(v, str) else v for k, v in raw.items()}
 
 
-def generate_digest(api_key):
+# Local brief file is gitignored — the repo is public, so brief content must
+# never be committed. In CI it comes from the ALTOS_BRIEF secret instead.
+BRIEF_PATH = Path(__file__).resolve().parent.parent / "config" / "altos_brief.md"
+
+
+def _load_brief():
+    """Steering brief for the digest. Env (CI secret) first, then a local
+    gitignored file. Returns '' if none — the digest still works generically."""
+    env = os.environ.get("ALTOS_BRIEF")
+    if env and env.strip():
+        return env.strip()
+    if BRIEF_PATH.exists():
+        text = BRIEF_PATH.read_text().strip()
+        if text:
+            return text
+    return ""
+
+
+def generate_digest(api_key, brief=""):
     """Run Claude with the web search tool and return a Slack-ready message."""
     import anthropic
 
@@ -64,29 +82,41 @@ def generate_digest(api_key):
 
     system = (
         "너는 Altos Ventures 다큐멘터리 제작팀을 위한 리서치 어시스턴트야. Altos는 "
-        "미국(실리콘밸리)과 한국에 걸친 VC라, 미국 소식과 한국 소식을 모두 챙겨야 해. "
-        "web_search 도구로 최신 정보를 직접 찾아 사실을 확인한 뒤 정리해. 영어권(미국) "
-        "매체도 적극적으로 검색하고, 핵심은 한국어로 옮겨 써.\n"
+        "한국계 미국 VC(장기투자 철학으로 유명, 토스·쿠팡·로블록스 등 포트폴리오)라, "
+        "**미국(US) 소식이 핵심**이고 한국 소식은 보조야.\n"
+        "web_search로 직접 찾아 사실을 확인한 뒤 정리하고, 핵심은 한국어로 옮겨 써. "
+        "미국은 양질의 매체를 폭넓게 검색해: The Information, Bloomberg, The New York "
+        "Times, The Wall Street Journal, TechCrunch, Axios, Forbes, Fortune(Term Sheet), "
+        "Wired, The Verge, Business Insider, Stratechery 등. 또 *다른 VC들의 블로그/"
+        "에세이*도 적극 찾아: a16z, Sequoia, First Round Review, USV(Fred Wilson AVC), "
+        "NFX, Bessemer, Greylock, Benchmark, Y Combinator/Paul Graham 등.\n"
         "기사 선정 기준이 중요해: 단순 '누가 얼마 투자받았다' 식 단신은 빼고, 산업의 흐름·"
-        "배경·전략·인물·생태계를 깊이 다루는 *기획/심층/분석/인터뷰* 기사를 우선해. "
+        "배경·전략·인물·생태계를 깊이 다루는 *기획/심층/분석/인터뷰/에세이*를 우선해. "
         "다큐 기획에 영감을 줄 만한(VC 산업 구조, 장기투자 철학, 한미 크로스보더 투자, "
-        "이민자·창업가 스토리, 한국 스타트업의 글로벌 진출 등) 콘텐츠를 골라.\n"
+        "이민자·창업가 스토리 등) 콘텐츠를 골라.\n"
         "출력은 오직 Slack 메시지 본문만 — 서두/맺음말/메타설명 없이. "
         "Slack mrkdwn 형식을 사용해: 굵게는 *별표*, 링크는 <URL|제목>, 불릿은 • 로. "
         "각 항목은 한두 문장으로 핵심과 '왜 다큐에 유용한지'를 짚고, 출처 링크를 꼭 붙여."
     )
 
+    if brief:
+        system += (
+            "\n\n--- 이 다큐 프로젝트의 리서치 브리프 (이 맥락에 맞춰 큐레이션할 것) ---\n"
+            + brief
+        )
+
     prompt = (
         f"오늘은 {today}야. 최근 24~48시간 내 발행된 소식을 web_search로 조사해서 아래 "
-        "섹션으로 정리해줘. 각 섹션 제목은 굵게 표시하고, 해당 기간에 마땅한 소식이 없는 "
-        "섹션은 '• 특이사항 없음'으로 적어.\n\n"
-        "1. *🎯 Altos Ventures 직접 소식* — Altos가 언급된 기사(미국/한국), 공식 발행물·"
-        "블로그·LinkedIn·X, 주요 포트폴리오사(토스, 두나무, 하이퍼커넥트 등) 소식. "
-        "Altos 자체 뉴스가 적은 날이 많으니 작은 소식이라도 찾아봐.\n"
-        "2. *🇺🇸 US 스타트업·VC 씬 (기획·심층)* — 미국 벤처/스타트업 생태계를 다룬 기획·"
-        "분석·인물·트렌드 기사 (TechCrunch, The Information, Axios, Bloomberg 등 포함).\n"
-        "3. *🇰🇷 한국 스타트업·VC 씬 (기획·심층)* — 한국 벤처 생태계를 다룬 기획·분석·"
-        "인물·트렌드 기사.\n"
+        "섹션으로 정리해줘. 각 섹션 제목은 굵게 표시하고, 마땅한 소식이 없는 섹션은 "
+        "'• 특이사항 없음'으로 적어.\n\n"
+        "1. *🎯 Altos Ventures 직접 소식* — Altos 언급 기사(미국/한국), 공식 발행물·"
+        "블로그·LinkedIn·X, 주요 포트폴리오사(토스, 쿠팡, 두나무 등) 소식. 자체 뉴스가 "
+        "적은 날이 많으니 작은 소식이라도 찾아봐.\n"
+        "2. *🇺🇸 US 스타트업·VC 씬 (핵심)* — 미국 벤처/스타트업 생태계 기획·분석·인물·"
+        "에세이. **이 섹션을 가장 비중 있게**, 가능하면 4~6개 이상 좋은 링크로 채워. "
+        "위에 적은 유명 매체와 다른 VC 블로그를 두루 활용해.\n"
+        "3. *🇰🇷 한국 스타트업·VC 씬 (보조)* — 핵심만 1~3개. 더밀크(The Miilk), "
+        "아웃스탠딩 등 VC를 잘 다루는 매체 위주로.\n"
         "4. *🎬 다큐 참고 — 트렌드/인물/이슈* — 위에 안 들어가지만 Altos 다큐 기획에 "
         "영감을 줄 만한 폭넓은 기획 콘텐츠(장기투자, 크로스보더, 창업가 서사 등).\n\n"
         "맨 위에 한 줄 제목을 넣어: '*🗞️ Altos & 스타트업·VC 데일리 — {date}*'.\n"
@@ -155,7 +185,7 @@ def main():
     if not creds["api_key"]:
         raise SystemExit("ERROR: ANTHROPIC_API_KEY not set (env or config.json).")
 
-    digest = generate_digest(creds["api_key"])
+    digest = generate_digest(creds["api_key"], _load_brief())
 
     if dry_run:
         print(digest)
