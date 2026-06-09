@@ -45,11 +45,14 @@ def _resolve_creds():
     cfg = _load_cfg()
     slack = cfg.get("slack") or {}
     anthropic_cfg = cfg.get("anthropic") or {}
-    return {
+    raw = {
         "api_key": os.environ.get("ANTHROPIC_API_KEY") or anthropic_cfg.get("api_key"),
         "bot_token": os.environ.get("SLACK_BOT_TOKEN") or slack.get("impact_lab_bot_token"),
         "user_id": os.environ.get("SLACK_USER_ID") or slack.get("my_user_id"),
     }
+    # Pasted secrets often carry a trailing newline/space, which is an invalid
+    # HTTP header value — strip whitespace so credentials are always clean.
+    return {k: v.strip() if isinstance(v, str) else v for k, v in raw.items()}
 
 
 def generate_digest(api_key):
