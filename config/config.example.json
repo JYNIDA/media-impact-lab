@@ -1,7 +1,11 @@
 {
   "slack": {
     "impact_lab_bot_token": "xoxb-REPLACE-WITH-YOUR-TOKEN",
-    "impact_lab_webhook": "https://hooks.slack.com/services/REPLACE-WITH-YOUR-WEBHOOK"
+    "impact_lab_webhook": "https://hooks.slack.com/services/REPLACE-WITH-YOUR-WEBHOOK",
+    "my_user_id": "REPLACE-WITH-YOUR-SLACK-MEMBER-ID"
+  },
+  "anthropic": {
+    "api_key": "REPLACE-WITH-ANTHROPIC-API-KEY-FOR-LOCAL-RUNS"
   },
   "youtube": {
     "api_key": "REPLACE-WITH-YOUTUBE-DATA-API-V3-KEY",
