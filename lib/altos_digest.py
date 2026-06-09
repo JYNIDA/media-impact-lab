@@ -55,7 +55,25 @@ def _resolve_creds():
     return {k: v.strip() if isinstance(v, str) else v for k, v in raw.items()}
 
 
-def generate_digest(api_key):
+# Local brief file is gitignored — the repo is public, so brief content must
+# never be committed. In CI it comes from the ALTOS_BRIEF secret instead.
+BRIEF_PATH = Path(__file__).resolve().parent.parent / "config" / "altos_brief.md"
+
+
+def _load_brief():
+    """Steering brief for the digest. Env (CI secret) first, then a local
+    gitignored file. Returns '' if none — the digest still works generically."""
+    env = os.environ.get("ALTOS_BRIEF")
+    if env and env.strip():
+        return env.strip()
+    if BRIEF_PATH.exists():
+        text = BRIEF_PATH.read_text().strip()
+        if text:
+            return text
+    return ""
+
+
+def generate_digest(api_key, brief=""):
     """Run Claude with the web search tool and return a Slack-ready message."""
     import anthropic
 
@@ -80,6 +98,12 @@ def generate_digest(api_key):
         "Slack mrkdwn 형식을 사용해: 굵게는 *별표*, 링크는 <URL|제목>, 불릿은 • 로. "
         "각 항목은 한두 문장으로 핵심과 '왜 다큐에 유용한지'를 짚고, 출처 링크를 꼭 붙여."
     )
+
+    if brief:
+        system += (
+            "\n\n--- 이 다큐 프로젝트의 리서치 브리프 (이 맥락에 맞춰 큐레이션할 것) ---\n"
+            + brief
+        )
 
     prompt = (
         f"오늘은 {today}야. 최근 24~48시간 내 발행된 소식을 web_search로 조사해서 아래 "
@@ -161,7 +185,7 @@ def main():
     if not creds["api_key"]:
         raise SystemExit("ERROR: ANTHROPIC_API_KEY not set (env or config.json).")
 
-    digest = generate_digest(creds["api_key"])
+    digest = generate_digest(creds["api_key"], _load_brief())
 
     if dry_run:
         print(digest)
