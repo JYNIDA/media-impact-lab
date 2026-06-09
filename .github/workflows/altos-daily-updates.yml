@@ -8,8 +8,9 @@ name: Altos Ventures Daily Updates
 
 on:
   schedule:
-    # 08:00 KST every day (= 23:00 UTC the previous day)
-    - cron: "0 23 * * *"
+    # 08:13 KST every day (= 23:13 UTC the previous day).
+    # Off-the-hour on purpose: GitHub delays/drops top-of-hour cron runs.
+    - cron: "13 23 * * *"
   workflow_dispatch: {}  # allow manual runs from the Actions tab
 
 permissions:
