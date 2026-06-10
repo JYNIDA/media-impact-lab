@@ -124,7 +124,10 @@ def generate_digest(api_key, brief=""):
         "내용만, 정보가 적으면 솔직하게 적어."
     ).replace("{date}", today)
 
-    tools = [{"type": "web_search_20260209", "name": "web_search"}]
+    # Plain web search (no code_execution / dynamic-filtering dependency) —
+    # the 20260209 dynamic-filtering version intermittently failed on Sonnet
+    # with "code_execution unavailable". This version is more reliable.
+    tools = [{"type": "web_search_20250305", "name": "web_search"}]
     messages = [{"role": "user", "content": prompt}]
 
     # Server-side web search runs an internal loop; resume on pause_turn.
